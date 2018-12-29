@@ -2,8 +2,6 @@ import copy
 import itertools
 from music21.note import Note
 from music21.pitch import Pitch
-from music21.interval import notesToChromatic
-from music21.voiceLeading import VoiceLeadingQuartet
 from music21.chord import Chord
 from music21.roman import RomanNumeral
 from music21.key import Key
@@ -76,7 +74,7 @@ def voiceChord(chord):
                 [chord.root().name] * 3 + [chord.third.name])
 
 
-def cost(chord1, chord2):
+def cost(key, chord1, chord2):
     '''Function to optimize over: enforces contrary motion, etc.'''
     score = 0
 
@@ -88,31 +86,48 @@ def cost(chord1, chord2):
         score += 50
 
     # Avoid big jumps
-    score += (notesToChromatic(chord1[0], chord2[0]).undirected // 2) ** 2
-    score += (notesToChromatic(chord1[1], chord2[1]).undirected) ** 2
-    score += (notesToChromatic(chord1[2], chord2[2]).undirected) ** 2
-    score += (notesToChromatic(chord1[3], chord2[3]).undirected) ** 2 // 10
+    score += (abs(chord1.pitches[0].midi - chord2.pitches[0].midi) // 2) ** 2
+    score += abs(chord1.pitches[1].midi - chord2.pitches[1].midi) ** 2
+    score += abs(chord1.pitches[2].midi - chord2.pitches[2].midi) ** 2
+    score += abs(chord1.pitches[3].midi - chord2.pitches[3].midi) ** 2 // 10
 
-    # Contrary motion and correct resolutions are good, parallel fifths are bad
+    # Contrary motion is good, parallel fifths are bad
     for i in range(4):
         for j in range(i + 1, 4):
-            q = VoiceLeadingQuartet(chord1[j], chord2[j], chord1[i], chord2[i])
-            if not q.isProperResolution():
-                score += 50
-            if q.parallelFifth():
-                score += 40
-            if q.parallelOctave():
+            t1, t2 = chord1.pitches[j], chord2.pitches[j]
+            b1, b2 = chord1.pitches[i], chord2.pitches[i]
+            i1, i2 = t1.midi - b1.midi, t2.midi - b2.midi
+            if i1 % 12 == i2 % 12 == 7: # Parallel fifth
+                score += 60
+            if i1 % 12 == i2 % 12 == 0: # Parallel octave
                 score += 100
-            if not (q.contraryMotion() or q.obliqueMotion()):
+            if (t2 > t1 and b2 > b1) or (t2 < t1 and b2 < b1): # Not contrary
                 score += 1
+
+    # Chordal 7th should resolve downward or stay
+    if chord1.seventh:
+        seventhVoice = chord1.pitches.index(chord1.seventh)
+        delta = chord2.pitches[seventhVoice].midi - chord1.seventh.midi
+        if delta < -2 or delta > 0:
+            score += 80
+
+    # V->I means ti->do or ti->sol
+    if (chord1.root().name == key.getDominant().name
+        and chord2.root().name == key.getTonic().name):
+        voice = chord1.pitches.index(chord1.third)
+        delta = chord2.pitches[voice].midi - chord1.third.midi
+        if delta != 1 and (delta != -4 or voice == 3):
+            score += 80
 
     return score
 
 
 def voiceProgression(key, chordProgression):
     '''Voice a progression of chords using DP.'''
+    key = Key(key)
     if isinstance(chordProgression, str):
         chordProgression = chordProgression.split()
+
     dp = [{} for _ in chordProgression]
     for i, numeral in enumerate(chordProgression):
         chord = RomanNumeral(numeral, key)
@@ -124,7 +139,7 @@ def voiceProgression(key, chordProgression):
             for v in voicings:
                 best = (float('inf'), None)
                 for pv, (pcost, _) in dp[i - 1].items():
-                    ccost = pcost + cost(pv, v)
+                    ccost = pcost + cost(key, pv, v)
                     if ccost < best[0]:
                         best = (ccost, pv)
                 dp[i][v] = best
