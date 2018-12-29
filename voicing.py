@@ -2,6 +2,8 @@ import copy
 import itertools
 from music21.note import Note
 from music21.pitch import Pitch
+from music21.interval import notesToChromatic
+from music21.voiceLeading import VoiceLeadingQuartet
 from music21.chord import Chord
 from music21.roman import RomanNumeral
 from music21.key import Key
@@ -62,9 +64,79 @@ def voiceChord(chord):
         noteNames.append(noteNames[0]) # must double the fifth
         yield from _voiceChord(noteNames)
     else:
-        yield from _voiceChord(noteNames + [chord.root().name]) # double the root
-        yield from _voiceChord(noteNames + [chord.third.name]) # double the third
-        yield from _voiceChord(noteNames + [chord.fifth.name]) # double the fifth
+        # double the root
+        yield from _voiceChord(noteNames + [chord.root().name])
+        # double the third
+        yield from _voiceChord(noteNames + [chord.third.name])
+        # double the fifth
+        yield from _voiceChord(noteNames + [chord.fifth.name])
+        # option to omit the fifth
+        if chord.romanNumeral == 'I' and chord.inversion() == 0:
+            yield from _voiceChord(
+                [chord.root().name] * 3 + [chord.third.name])
+
+
+def cost(chord1, chord2):
+    '''Function to optimize over: enforces contrary motion, etc.'''
+    score = 0
+
+    # Overlapping voices
+    if (chord2[0] > chord1[1]
+        or chord2[1] < chord1[0] or chord2[1] > chord1[2]
+        or chord2[2] < chord1[1] or chord2[2] > chord1[3]
+        or chord2[3] < chord1[2]):
+        score += 50
+
+    # Avoid big jumps
+    score += (notesToChromatic(chord1[0], chord2[0]).undirected // 2) ** 2
+    score += (notesToChromatic(chord1[1], chord2[1]).undirected) ** 2
+    score += (notesToChromatic(chord1[2], chord2[2]).undirected) ** 2
+    score += (notesToChromatic(chord1[3], chord2[3]).undirected) ** 2 // 10
+
+    # Contrary motion and correct resolutions are good, parallel fifths are bad
+    for i in range(4):
+        for j in range(i + 1, 4):
+            q = VoiceLeadingQuartet(chord1[j], chord2[j], chord1[i], chord2[i])
+            if not q.isProperResolution():
+                score += 50
+            if q.parallelFifth():
+                score += 40
+            if q.parallelOctave():
+                score += 100
+            if not (q.contraryMotion() or q.obliqueMotion()):
+                score += 1
+
+    return score
+
+
+def voiceProgression(key, chordProgression):
+    '''Voice a progression of chords using DP.'''
+    if isinstance(chordProgression, str):
+        chordProgression = chordProgression.split()
+    dp = [{} for _ in chordProgression]
+    for i, numeral in enumerate(chordProgression):
+        chord = RomanNumeral(numeral, key)
+        voicings = voiceChord(chord)
+        if i == 0:
+            for v in voicings:
+                dp[0][v] = (0, None)
+        else:
+            for v in voicings:
+                best = (float('inf'), None)
+                for pv, (pcost, _) in dp[i - 1].items():
+                    ccost = pcost + cost(pv, v)
+                    if ccost < best[0]:
+                        best = (ccost, pv)
+                dp[i][v] = best
+
+    cur, (totalCost, _) = min(dp[-1].items(), key=lambda p: p[1][0])
+    print('Cost:', totalCost)
+
+    ret = []
+    for i in reversed(range(len(chordProgression))):
+        ret.append(cur)
+        cur = dp[i][cur][1]
+    return list(reversed(ret))
 
 
 def showChords(chords):
@@ -97,8 +169,7 @@ def showVoicings(key, numeral):
 
 
 def main():
-    print(list(voiceChord(RomanNumeral('V7'))))
-    showVoicings('G', 'V')
+    showChords(voiceProgression('B-', 'I I6 IV V43/ii ii V V7 I'))
 
 
 if __name__ == '__main__':
