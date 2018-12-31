@@ -83,7 +83,7 @@ def cost(key, chord1, chord2):
         or chord2[1] < chord1[0] or chord2[1] > chord1[2]
         or chord2[2] < chord1[1] or chord2[2] > chord1[3]
         or chord2[3] < chord1[2]):
-        score += 50
+        score += 100
 
     # Avoid big jumps
     score += (abs(chord1.pitches[0].midi - chord2.pitches[0].midi) // 2) ** 2
@@ -98,9 +98,9 @@ def cost(key, chord1, chord2):
             b1, b2 = chord1.pitches[i], chord2.pitches[i]
             i1, i2 = t1.midi - b1.midi, t2.midi - b2.midi
             if i1 % 12 == i2 % 12 == 7: # Parallel fifth
-                score += 60
+                score += 120
             if i1 % 12 == i2 % 12 == 0: # Parallel octave
-                score += 100
+                score += 200
             if (t2 > t1 and b2 > b1) or (t2 < t1 and b2 < b1): # Not contrary
                 score += 1
 
@@ -109,7 +109,7 @@ def cost(key, chord1, chord2):
         seventhVoice = chord1.pitches.index(chord1.seventh)
         delta = chord2.pitches[seventhVoice].midi - chord1.seventh.midi
         if delta < -2 or delta > 0:
-            score += 80
+            score += 160
 
     # V->I means ti->do or ti->sol
     if (chord1.root().name == key.getDominant().name
@@ -117,7 +117,7 @@ def cost(key, chord1, chord2):
         voice = chord1.pitches.index(chord1.third)
         delta = chord2.pitches[voice].midi - chord1.third.midi
         if delta != 1 and (delta != -4 or voice == 3):
-            score += 80
+            score += 160
 
     return score
 
