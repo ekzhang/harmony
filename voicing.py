@@ -15,7 +15,11 @@ BASS_RANGE = (Pitch('F2'), Pitch('C4'))
 
 
 def voiceNote(noteName, pitchRange):
-    '''Generates voicings for a note in a given pitch range.'''
+    '''Generates voicings for a note in a given pitch range.
+
+    Returns a list of `Pitch` objects with the same name as the note that also
+    fall within the voice's range.
+    '''
     lowerOctave = pitchRange[0].octave
     upperOctave = pitchRange[1].octave
     for octave in range(lowerOctave, upperOctave + 1):
@@ -79,7 +83,7 @@ def voiceChord(key, chord):
 
 
 def progressionCost(key, chord1, chord2):
-    '''Function to optimize over: enforces contrary motion, etc.'''
+    '''Computes elements of cost between two chords: contrary motion, etc.'''
     cost = 0
 
     # Overlapping voices
@@ -132,7 +136,7 @@ def progressionCost(key, chord1, chord2):
 
 
 def chordCost(key, chord):
-    '''Elements of cost that only pertain to a single chord.'''
+    '''Computes elements of cost that only pertain to a single chord.'''
     cost = 0
     if chord.inversion() == 0:
         # Prefer to double the root in a R.P. chord
@@ -142,7 +146,13 @@ def chordCost(key, chord):
 
 
 def voiceProgression(key, chordProgression):
-    '''Voice a progression of chords using DP.'''
+    '''Voices a chord progression in a specified key using DP.
+
+    Follows eighteenth-century voice leading procedures, as guided by the cost
+    function defined in the `chordCost` and `progressionCost` functions.
+    Returns a list of four-pitch chords, corresponding to successive Roman
+    numerals in the chord progression.
+    '''
     key = Key(key)
     if isinstance(chordProgression, str):
         chordProgression = chordProgression.split()
