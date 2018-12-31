@@ -48,68 +48,77 @@ def _voiceChord(noteNames):
                 yield chord4
 
 
-def voiceChord(chord):
+def voiceChord(key, chord):
     '''Generates four-part voicings for a fifth or seventh chord.
 
     The bass note is kept intact, though other notes (and doublings) are
     allowed to vary between different voicings. Intervals between adjacent
     non-bass parts are limited to a single octave.
     '''
+    leadingTone = key.getLeadingTone().name
     noteNames = [pitch.name for pitch in chord.pitches]
     if chord.containsSeventh():
         yield from _voiceChord(noteNames)
     elif chord.inversion() == 2:
-        noteNames.append(noteNames[0]) # must double the fifth
-        yield from _voiceChord(noteNames)
+        # must double the fifth
+        yield from _voiceChord(noteNames + [chord.fifth.name])
     else:
         # double the root
-        yield from _voiceChord(noteNames + [chord.root().name])
+        if chord.root().name != leadingTone:
+            yield from _voiceChord(noteNames + [chord.root().name])
         # double the third
-        yield from _voiceChord(noteNames + [chord.third.name])
+        if chord.third.name != leadingTone:
+            yield from _voiceChord(noteNames + [chord.third.name])
         # double the fifth
-        yield from _voiceChord(noteNames + [chord.fifth.name])
+        if chord.fifth.name != leadingTone:
+            yield from _voiceChord(noteNames + [chord.fifth.name])
         # option to omit the fifth
         if chord.romanNumeral == 'I' and chord.inversion() == 0:
             yield from _voiceChord(
                 [chord.root().name] * 3 + [chord.third.name])
 
 
-def cost(key, chord1, chord2):
+def progressionCost(key, chord1, chord2):
     '''Function to optimize over: enforces contrary motion, etc.'''
-    score = 0
+    cost = 0
 
     # Overlapping voices
     if (chord2[0] > chord1[1]
         or chord2[1] < chord1[0] or chord2[1] > chord1[2]
         or chord2[2] < chord1[1] or chord2[2] > chord1[3]
         or chord2[3] < chord1[2]):
-        score += 100
+        cost += 40
 
     # Avoid big jumps
-    score += (abs(chord1.pitches[0].midi - chord2.pitches[0].midi) // 2) ** 2
-    score += abs(chord1.pitches[1].midi - chord2.pitches[1].midi) ** 2
-    score += abs(chord1.pitches[2].midi - chord2.pitches[2].midi) ** 2
-    score += abs(chord1.pitches[3].midi - chord2.pitches[3].midi) ** 2 // 10
+    diff = [abs(chord1.pitches[i].midi - chord2.pitches[i].midi)
+            for i in range(4)]
+    cost += (diff[3] // 3) ** 2 if diff[3] else 1
+    cost += diff[2] ** 2 // 3
+    cost += diff[1] ** 2 // 3
+    cost += (diff[0] ** 2 // 50 if diff[0] != 12 else 0)
 
     # Contrary motion is good, parallel fifths are bad
     for i in range(4):
         for j in range(i + 1, 4):
             t1, t2 = chord1.pitches[j], chord2.pitches[j]
             b1, b2 = chord1.pitches[i], chord2.pitches[i]
+            if t1 == t2 and b1 == b2: # No motion
+                continue
             i1, i2 = t1.midi - b1.midi, t2.midi - b2.midi
             if i1 % 12 == i2 % 12 == 7: # Parallel fifth
-                score += 120
+                cost += 60
             if i1 % 12 == i2 % 12 == 0: # Parallel octave
-                score += 200
-            if (t2 > t1 and b2 > b1) or (t2 < t1 and b2 < b1): # Not contrary
-                score += 1
+                cost += 100
+            if i == 0 and j == 3: # Soprano and bass not contrary
+                if (t2 > t1 and b2 > b1) or (t2 < t1 and b2 < b1):
+                    cost += 5
 
     # Chordal 7th should resolve downward or stay
     if chord1.seventh:
         seventhVoice = chord1.pitches.index(chord1.seventh)
         delta = chord2.pitches[seventhVoice].midi - chord1.seventh.midi
         if delta < -2 or delta > 0:
-            score += 160
+            cost += 100
 
     # V->I means ti->do or ti->sol
     if (chord1.root().name == key.getDominant().name
@@ -117,9 +126,19 @@ def cost(key, chord1, chord2):
         voice = chord1.pitches.index(chord1.third)
         delta = chord2.pitches[voice].midi - chord1.third.midi
         if delta != 1 and (delta != -4 or voice == 3):
-            score += 160
+            cost += 100
 
-    return score
+    return cost
+
+
+def chordCost(key, chord):
+    '''Elements of cost that only pertain to a single chord.'''
+    cost = 0
+    if chord.inversion() == 0:
+        # Prefer to double the root in a R.P. chord
+        if not chord.pitchClasses.count(chord.root().pitchClass) > 1:
+            cost += 20
+    return cost
 
 
 def voiceProgression(key, chordProgression):
@@ -131,27 +150,25 @@ def voiceProgression(key, chordProgression):
     dp = [{} for _ in chordProgression]
     for i, numeral in enumerate(chordProgression):
         chord = RomanNumeral(numeral, key)
-        voicings = voiceChord(chord)
+        voicings = voiceChord(key, chord)
         if i == 0:
             for v in voicings:
-                dp[0][v] = (0, None)
+                dp[0][v] = (chordCost(key, v), None)
         else:
             for v in voicings:
                 best = (float('inf'), None)
                 for pv, (pcost, _) in dp[i - 1].items():
-                    ccost = pcost + cost(key, pv, v)
+                    ccost = pcost + progressionCost(key, pv, v)
                     if ccost < best[0]:
                         best = (ccost, pv)
-                dp[i][v] = best
+                dp[i][v] = (best[0] + chordCost(key, v), best[1])
 
     cur, (totalCost, _) = min(dp[-1].items(), key=lambda p: p[1][0])
-    print('Cost:', totalCost)
-
     ret = []
     for i in reversed(range(len(chordProgression))):
         ret.append(cur)
         cur = dp[i][cur][1]
-    return list(reversed(ret))
+    return list(reversed(ret)), totalCost
 
 
 def showChords(chords):
@@ -179,12 +196,15 @@ def showChords(chords):
 
 def showVoicings(key, numeral):
     '''Displays all the valid voicings of a roman numeral in a key.'''
+    key = Key(key)
     chord = RomanNumeral(numeral, key)
-    showChords(voiceChord(chord))
+    showChords(voiceChord(key, chord))
 
 
 def main():
-    showChords(voiceProgression('B-', 'I I6 IV V43/ii ii V V7 I'))
+    progression, cost = voiceProgression('B-', 'I I6 IV V43/ii ii V V7 I')
+    print('Cost:', cost)
+    showChords(progression)
 
 
 if __name__ == '__main__':
