@@ -11,7 +11,7 @@ from music21.stream import Stream, Part, Score, Measure, Voice
 SOPRANO_RANGE = (Pitch('C4'), Pitch('G5'))
 ALTO_RANGE = (Pitch('G3'), Pitch('C5'))
 TENOR_RANGE = (Pitch('C3'), Pitch('G4'))
-BASS_RANGE = (Pitch('F2'), Pitch('C4'))
+BASS_RANGE = (Pitch('E2'), Pitch('C4'))
 
 
 def voiceNote(noteName, pitchRange):
@@ -125,11 +125,13 @@ def progressionCost(key, chord1, chord2):
             cost += 100
 
     # V->I means ti->do or ti->sol
-    if (chord1.root().name == key.getDominant().name
-        and chord2.root().name == key.getTonic().name):
-        voice = chord1.pitches.index(chord1.third)
-        delta = chord2.pitches[voice].midi - chord1.third.midi
-        if delta != 1 and (delta != -4 or voice == 3):
+    pitches = key.getPitches()
+    pitches[6] = key.getLeadingTone()
+    if (chord1.root().name in (pitches[4].name, pitches[6].name)
+        and chord2.root().name in (pitches[0].name, pitches[5].name)):
+        voice = chord1.pitchNames.index(pitches[6].name)
+        delta = chord2.pitches[voice].midi - chord1.pitches[voice].midi
+        if not (delta == 1 or (delta == -4 and voice >= 1 and voice <= 2)):
             cost += 100
 
     return cost
@@ -181,7 +183,7 @@ def voiceProgression(key, chordProgression):
     return list(reversed(ret)), totalCost
 
 
-def showChords(chords):
+def showChords(chords, lengths=None):
     '''Displays a sequence of chords on a four-part score.
 
     Soprano and alto parts are displayed on the top (treble) clef, while tenor
@@ -189,8 +191,10 @@ def showChords(chords):
     directions.
     '''
     voices = [Voice() for _ in range(4)]
-    for chord in chords:
-        bass, tenor, alto, soprano = [Note(p) for p in chord.pitches]
+    if lengths is None:
+        lengths = [1 for _ in chords]
+    for chord, length in zip(chords, lengths):
+        bass, tenor, alto, soprano = [Note(p, quarterLength=length) for p in chord.pitches]
         bass.stemDirection = alto.stemDirection = 'down'
         tenor.stemDirection = soprano.stemDirection = 'up'
         voices[0].append(soprano)
@@ -212,9 +216,32 @@ def showVoicings(key, numeral):
 
 
 def main():
-    progression, cost = voiceProgression('B-', 'I I6 IV V43/ii ii V V7 I')
-    print('Cost:', cost)
-    showChords(progression)
+    chorale = r'''
+    D: I vi I6 IV I64 V I
+    D: I6 V64 I IV6 V I6 V
+    D: I IV6 I6 IV I64 V7 vi
+    D: I6 V43 I I6 ii65 V I
+    A: I IV64 I vi ii6 V7 I
+    b: iv6 i64 iv iio6 i64 V7 i
+    A: IV IV V I6 ii V65 I
+    D: IV6 I V65 I ii65 V7 I
+    '''
+    lines = [line.strip().split(': ') for line in chorale.split('\n') if line.strip()]
+    print(lines)
+
+    progression = []
+    lengths = []
+    for key, chords in lines:
+        phrase, cost = voiceProgression(key, chords)
+        print(cost)
+        progression.extend(phrase)
+        lengths.extend([1] * (len(phrase) - 1) + [2])
+
+    showChords(progression, lengths)
+
+    # progression, cost = voiceProgression('B-', 'I I6 IV V43/ii ii V V7 I')
+    # print('Cost:', cost)
+    # showChords(progression)
 
 
 if __name__ == '__main__':
