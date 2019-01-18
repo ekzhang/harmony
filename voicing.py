@@ -117,7 +117,7 @@ def progressionCost(key, chord1, chord2):
                 cost += 100
             if i == 0 and j == 3: # Soprano and bass not contrary
                 if (t2 > t1 and b2 > b1) or (t2 < t1 and b2 < b1):
-                    cost += 5
+                    cost += 2
 
     # Chordal 7th should resolve downward or stay
     if chord1.seventh:
@@ -143,9 +143,9 @@ def chordCost(key, chord):
     '''Computes elements of cost that only pertain to a single chord.'''
     cost = 0
     if chord.inversion() == 0:
-        # Prefer to double the root in a R.P. chord
-        if not chord.pitchClasses.count(chord.root().pitchClass) > 1:
-            cost += 20
+        # Slightly prefer to double the root in a R.P. chord
+        if chord.pitchClasses.count(chord.root().pitchClass) <= 1:
+            cost += 1
     return cost
 
 
@@ -238,7 +238,7 @@ def generateChorale(chorale, lengths=None, ts='4/4'):
 
 def main():
     chorale = 'B-: I I6 IV V43/ii ii V V7 I'
-    generateChorale(chorale, [1, 1/2, 1, 1/2, 1, 1/2, 1/2, 1], '6/8').write('musicxml', 'test.musicxml')
+    generateChorale(chorale, [1, 1/2, 1, 1/2, 1, 1/2, 1/2, 1], '6/8').show()
 
 
 if __name__ == '__main__':
