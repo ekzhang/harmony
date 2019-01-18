@@ -34,11 +34,8 @@
         <div id="sheet-music"></div>
     </div>
 
-    <!-- <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@0.6.7/build/opensheetmusicdisplay.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/flat-embed@v0.10.0/dist/embed.min.js"></script>
     <script>
-        // var OSMD = opensheetmusicdisplay.OpenSheetMusicDisplay;
-        // var osmd = new OSMD('sheet-music', { drawingParameters: 'compact', drawPartNames: false });
         var xml = `{{ mxml | safe }}`;
         if (xml) {
             var container = document.getElementById('sheet-music');
