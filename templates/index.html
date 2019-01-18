@@ -31,22 +31,24 @@
                 <input type="submit" class="btn btn-primary">
             </div>
         </form>
-        <div class="row border border-secondary" id="sheet-music"></div>
+        {% if mxml %}
+            <div class="row border border-secondary" id="sheet-music"></div>
+            <script src="https://cdn.jsdelivr.net/npm/flat-embed@v0.10.0/dist/embed.min.js"></script>
+            <script>
+                var xml = `{{ mxml | safe }}`;
+                var container = document.getElementById('sheet-music');
+                var embed = new Flat.Embed(container, {
+                    height: 470,
+                    embedParams: {
+                        appId: '5c4125f48f94526f29274055'
+                    }
+                });
+                embed.loadMusicXML(xml);
+            </script>
+        {% else %}
+            <footer>Created by <a href="https://github.com/ekzhang">Eric Zhang</a> (<a href="https://github.com/ekzhang/harmony">GitHub</a>).</footer>
+        {% endif %}
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flat-embed@v0.10.0/dist/embed.min.js"></script>
-    <script>
-        var xml = `{{ mxml | safe }}`;
-        if (xml) {
-            var container = document.getElementById('sheet-music');
-            var embed = new Flat.Embed(container, {
-                height: 470,
-                embedParams: {
-                    appId: '5c4125f48f94526f29274055'
-                }
-            });
-            embed.loadMusicXML(xml);
-        }
-    </script>
 </body>
 </html>
