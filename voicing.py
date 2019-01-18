@@ -5,8 +5,10 @@ from music21.pitch import Pitch
 from music21.chord import Chord
 from music21.roman import RomanNumeral
 from music21.key import Key
+from music21.meter import TimeSignature
 from music21.clef import BassClef, TrebleClef
-from music21.stream import Stream, Part, Score, Measure, Voice
+from music21.instrument import Piano
+from music21.stream import Part, Score, Voice
 
 SOPRANO_RANGE = (Pitch('C4'), Pitch('G5'))
 ALTO_RANGE = (Pitch('G3'), Pitch('C5'))
@@ -157,7 +159,7 @@ def voiceProgression(key, chordProgression):
     '''
     key = Key(key)
     if isinstance(chordProgression, str):
-        chordProgression = chordProgression.split()
+        chordProgression = list(filter(None, chordProgression.split()))
 
     dp = [{} for _ in chordProgression]
     for i, numeral in enumerate(chordProgression):
@@ -183,18 +185,19 @@ def voiceProgression(key, chordProgression):
     return list(reversed(ret)), totalCost
 
 
-def showChords(chords, lengths=None):
-    '''Displays a sequence of chords on a four-part score.
+def generateScore(chords, lengths=None, ts='4/4'):
+    '''Generates a four-part score from a sequence of chords.
 
     Soprano and alto parts are displayed on the top (treble) clef, while tenor
     and bass parts are displayed on the bottom (bass) clef, with correct stem
     directions.
     '''
-    voices = [Voice() for _ in range(4)]
     if lengths is None:
         lengths = [1 for _ in chords]
+    voices = [Voice([Piano()]) for _ in range(4)]
     for chord, length in zip(chords, lengths):
-        bass, tenor, alto, soprano = [Note(p, quarterLength=length) for p in chord.pitches]
+        bass, tenor, alto, soprano = [
+            Note(p, quarterLength=length) for p in chord.pitches]
         bass.stemDirection = alto.stemDirection = 'down'
         tenor.stemDirection = soprano.stemDirection = 'up'
         voices[0].append(soprano)
@@ -202,46 +205,40 @@ def showChords(chords, lengths=None):
         voices[2].append(tenor)
         voices[3].append(bass)
 
-    female = Part([TrebleClef(), voices[0], voices[1]])
-    male = Part([BassClef(), voices[2], voices[3]])
+    female = Part([TrebleClef(), TimeSignature(ts), voices[0], voices[1]])
+    male = Part([BassClef(), TimeSignature(ts), voices[2], voices[3]])
     score = Score([female, male])
-    score.show()
+    return score
 
 
-def showVoicings(key, numeral):
-    '''Displays all the valid voicings of a roman numeral in a key.'''
-    key = Key(key)
-    chord = RomanNumeral(numeral, key)
-    showChords(voiceChord(key, chord))
+def generateChorale(chorale, lengths=None, ts='4/4'):
+    '''Voices a chorale with multiple phrases.
+
+    Each phrase should be placed on a line in the input string, with the key at
+    the beginning followed by space-separated roman numerals. For example,
+
+     D: I vi I6 IV I64 V I
+     D: I6 V64 I IV6 V I6 V
+     D: I IV6 I6 IV I64 V7 vi
+     D: I6 V43 I I6 ii65 V I
+     A: I IV64 I vi ii6 V7 I
+     b: iv6 i64 iv iio6 i64 V7 i
+     A: IV IV V I6 ii V65 I
+     D: IV6 I V65 I ii65 V7 I
+    '''
+    lines = [line.strip().split(':')
+             for line in chorale.split('\n') if line.strip()]
+    progression = []
+    for key, chords in lines:
+        phrase, _ = voiceProgression(key, chords)
+        progression.extend(phrase)
+    score = generateScore(progression, lengths, ts)
+    return score
 
 
 def main():
-    chorale = r'''
-    D: I vi I6 IV I64 V I
-    D: I6 V64 I IV6 V I6 V
-    D: I IV6 I6 IV I64 V7 vi
-    D: I6 V43 I I6 ii65 V I
-    A: I IV64 I vi ii6 V7 I
-    b: iv6 i64 iv iio6 i64 V7 i
-    A: IV IV V I6 ii V65 I
-    D: IV6 I V65 I ii65 V7 I
-    '''
-    lines = [line.strip().split(': ') for line in chorale.split('\n') if line.strip()]
-    print(lines)
-
-    progression = []
-    lengths = []
-    for key, chords in lines:
-        phrase, cost = voiceProgression(key, chords)
-        print(cost)
-        progression.extend(phrase)
-        lengths.extend([1] * (len(phrase) - 1) + [2])
-
-    showChords(progression, lengths)
-
-    # progression, cost = voiceProgression('B-', 'I I6 IV V43/ii ii V V7 I')
-    # print('Cost:', cost)
-    # showChords(progression)
+    chorale = 'B-: I I6 IV V43/ii ii V V7 I'
+    generateChorale(chorale, [1, 1/2, 1, 1/2, 1, 1/2, 1/2, 1], '6/8').write('musicxml', 'test.musicxml')
 
 
 if __name__ == '__main__':
