@@ -14,8 +14,8 @@
 </head>
 <body>
     <div class="container text-center p-4">
-        <h1>Harmony</h1>
-        <form action="/" method="POST">
+        <a href="/" style="color: inherit; text-decoration: none;"><h1>Harmony</h1></a>
+        <form action="/generate" method="POST">
             <div class="form-group row text-left">
                 <label for="inputTs" class="col-sm-3 col-form-label">Time Signature</label>
                 <input type="text" class="col-sm-9 form-control" name="ts" id="inputTs" placeholder="4/4" value="{{ ts if ts else '4/4' }}">
