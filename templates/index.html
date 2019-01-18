@@ -31,7 +31,7 @@
                 <input type="submit" class="btn btn-primary">
             </div>
         </form>
-        <div id="sheet-music"></div>
+        <div class="row border border-secondary" id="sheet-music"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/flat-embed@v0.10.0/dist/embed.min.js"></script>
@@ -40,7 +40,7 @@
         if (xml) {
             var container = document.getElementById('sheet-music');
             var embed = new Flat.Embed(container, {
-                height: 500,
+                height: 470,
                 embedParams: {
                     appId: '5c4125f48f94526f29274055'
                 }
