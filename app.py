@@ -36,14 +36,14 @@ def generate():
     lengths = None
     if rhythm:
         lengths = [Fraction(rhythm[i % len(rhythm)])
-                    for i in range(len(chorale))]
+                   for i in range(len(chorale))]
 
     score = generateChorale(chorale, lengths, ts)
     fp = score.write('musicxml')
     with open(fp, 'r') as f:
         mxml = f.read()
         obj = Chorale(mxml=mxml, timesig=ts,
-                        rhythm=' '.join(rhythm), chorale=chorale)
+                      rhythm=' '.join(rhythm), chorale=chorale)
         db.session.add(obj)
         db.session.commit()
         return redirect(url_for('view', chorale_id=obj.id))
