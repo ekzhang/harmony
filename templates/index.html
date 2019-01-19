@@ -15,7 +15,7 @@
 <body>
     <div class="container text-center p-4">
         <a href="/" style="color: inherit; text-decoration: none;"><h1>Harmony</h1></a>
-        <form action="/generate" method="POST">
+        <form action="/generate" method="POST" id="choraleForm">
             <div class="form-group row text-left">
                 <label for="inputTs" class="col-sm-3 col-form-label">Time Signature</label>
                 <input type="text" class="col-sm-9 form-control" name="ts" id="inputTs" placeholder="4/4" value="{{ ts if ts else '4/4' }}">
@@ -28,9 +28,27 @@
                 <textarea class="form-control" name="chorale" rows="8">{{ chorale if chorale else 'B-: I I6 IV V43/ii ii V V7 I' }}</textarea>
             </div>
             <div class="form-group">
-                <input type="submit" class="btn btn-primary">
+                <input type="submit" class="btn btn-primary" id="submitBtn">
+                <div class="progress" id="progressCtr" style="display: none;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" id="progressBar"></div>
+                </div>
             </div>
         </form>
+        <script>
+            document.getElementById('choraleForm').addEventListener('submit', function(event) {
+                document.getElementById('submitBtn').style.display = 'none';
+                document.getElementById('progressCtr').style.display = 'flex';
+                var length = document.getElementById('choraleForm').chorale.innerHTML.split(' ').length;
+                var approxTime = length * 2.5e3;
+                var startTime = Date.now();
+                var bar = document.getElementById('progressBar');
+                setInterval(function() {
+                    var elapsed = (Date.now() - startTime) / approxTime;
+                    var expt = 1 - Math.exp(-3 * elapsed);
+                    bar.style.width = 100 * expt + '%';
+                }, 100);
+            });
+        </script>
         {% if mxml %}
             <div class="row border border-secondary" id="sheet-music"></div>
             <script src="https://cdn.jsdelivr.net/npm/flat-embed@v0.10.0/dist/embed.min.js"></script>
