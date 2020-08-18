@@ -1,4 +1,4 @@
-# harmony
+# Harmony
 
 Generate four-part harmony following idiomatic voice-leading procedures with DP!
 
@@ -7,3 +7,30 @@ Generate four-part harmony following idiomatic voice-leading procedures with DP!
 ```
 
 ![Four-part harmony](https://i.imgur.com/9bl7V5t.png)
+
+See the web interface at [autoharmony.herokuapp.com](https://autoharmony.herokuapp.com/). This was built with [Music21](https://github.com/cuthbertLab/music21).
+
+## Usage
+
+First, install and activate dependencies managed by [Pipenv](https://github.com/pypa/pipenv).
+
+```shell
+$ pipenv install
+$ pipenv shell
+```
+
+To generate a chorale:
+
+```shell
+$ python voicing.py
+```
+
+To launch the web server:
+
+```shell
+$ DATABASE_URL=<POSTGRES_URL> gunicorn app
+```
+
+## License
+
+Licensed under the [BSD 3-Clause License](LICENSE.txt).
