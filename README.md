@@ -25,10 +25,16 @@ To generate a chorale:
 $ python voicing.py
 ```
 
-To launch the web server:
+To launch the development web server:
 
 ```shell
-$ DATABASE_URL=<POSTGRES_URL> gunicorn app
+$ FLASK_APP=app.py FLASK_ENV=development DATABASE_URL=<POSTGRES_URL> flask run
+```
+
+To launch the production web server:
+
+```shell
+$ DATABASE_URL=<POSTGRES_URL> WEB_CONCURRENCY=<NUM_WORKERS> gunicorn app
 ```
 
 ## License
