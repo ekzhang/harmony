@@ -1,8 +1,0 @@
-music21==5.5.0
-Flask==1.0.2
-Werkzeug==0.14.1
-Jinja2==2.10
-gunicorn==19.9.0
-flask-sqlalchemy==2.3.2
-SQLAlchemy==1.2.16
-psycopg2==2.7.6.1

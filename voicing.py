@@ -167,20 +167,21 @@ def voiceProgression(key, chordProgression):
         voicings = voiceChord(key, chord)
         if i == 0:
             for v in voicings:
-                dp[0][v] = (chordCost(key, v), None)
+                dp[0][v.pitches] = (chordCost(key, v), None)
         else:
             for v in voicings:
                 best = (float('inf'), None)
-                for pv, (pcost, _) in dp[i - 1].items():
+                for pv_pitches, (pcost, _) in dp[i - 1].items():
+                    pv = Chord(pv_pitches)
                     ccost = pcost + progressionCost(key, pv, v)
                     if ccost < best[0]:
-                        best = (ccost, pv)
-                dp[i][v] = (best[0] + chordCost(key, v), best[1])
+                        best = (ccost, pv_pitches)
+                dp[i][v.pitches] = (best[0] + chordCost(key, v), best[1])
 
     cur, (totalCost, _) = min(dp[-1].items(), key=lambda p: p[1][0])
     ret = []
     for i in reversed(range(len(chordProgression))):
-        ret.append(cur)
+        ret.append(Chord(cur))
         cur = dp[i][cur][1]
     return list(reversed(ret)), totalCost
 
