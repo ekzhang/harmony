@@ -10,18 +10,18 @@ from music21.clef import BassClef, TrebleClef
 from music21.instrument import Piano
 from music21.stream import Part, Score, Voice
 
-SOPRANO_RANGE = (Pitch('C4'), Pitch('G5'))
-ALTO_RANGE = (Pitch('G3'), Pitch('C5'))
-TENOR_RANGE = (Pitch('C3'), Pitch('G4'))
-BASS_RANGE = (Pitch('E2'), Pitch('C4'))
+SOPRANO_RANGE = (Pitch("C4"), Pitch("G5"))
+ALTO_RANGE = (Pitch("G3"), Pitch("C5"))
+TENOR_RANGE = (Pitch("C3"), Pitch("G4"))
+BASS_RANGE = (Pitch("E2"), Pitch("C4"))
 
 
 def voiceNote(noteName, pitchRange):
-    '''Generates voicings for a note in a given pitch range.
+    """Generates voicings for a note in a given pitch range.
 
     Returns a list of `Pitch` objects with the same name as the note that also
     fall within the voice's range.
-    '''
+    """
     lowerOctave = pitchRange[0].octave
     upperOctave = pitchRange[1].octave
     for octave in range(lowerOctave, upperOctave + 1):
@@ -34,10 +34,10 @@ def _voiceTriadUnordered(noteNames):
     assert len(noteNames) == 3
     for tenor, alto, soprano in itertools.permutations(noteNames, 3):
         for sopranoNote in voiceNote(soprano, SOPRANO_RANGE):
-            altoMin = max((ALTO_RANGE[0], sopranoNote.transpose('-P8')))
+            altoMin = max((ALTO_RANGE[0], sopranoNote.transpose("-P8")))
             altoMax = min((ALTO_RANGE[1], sopranoNote))
             for altoNote in voiceNote(alto, (altoMin, altoMax)):
-                tenorMin = max((TENOR_RANGE[0], altoNote.transpose('-P8')))
+                tenorMin = max((TENOR_RANGE[0], altoNote.transpose("-P8")))
                 tenorMax = min((TENOR_RANGE[1], altoNote))
                 for tenorNote in voiceNote(tenor, (tenorMin, tenorMax)):
                     yield Chord([tenorNote, altoNote, sopranoNote])
@@ -55,12 +55,12 @@ def _voiceChord(noteNames):
 
 
 def voiceChord(key, chord):
-    '''Generates four-part voicings for a fifth or seventh chord.
+    """Generates four-part voicings for a fifth or seventh chord.
 
     The bass note is kept intact, though other notes (and doublings) are
     allowed to vary between different voicings. Intervals between adjacent
     non-bass parts are limited to a single octave.
-    '''
+    """
     leadingTone = key.getLeadingTone().name
     noteNames = [pitch.name for pitch in chord.pitches]
     if chord.containsSeventh():
@@ -79,43 +79,45 @@ def voiceChord(key, chord):
         if chord.fifth.name != leadingTone:
             yield from _voiceChord(noteNames + [chord.fifth.name])
         # option to omit the fifth
-        if chord.romanNumeral == 'I' and chord.inversion() == 0:
-            yield from _voiceChord(
-                [chord.root().name] * 3 + [chord.third.name])
+        if chord.romanNumeral == "I" and chord.inversion() == 0:
+            yield from _voiceChord([chord.root().name] * 3 + [chord.third.name])
 
 
 def progressionCost(key, chord1, chord2):
-    '''Computes elements of cost between two chords: contrary motion, etc.'''
+    """Computes elements of cost between two chords: contrary motion, etc."""
     cost = 0
 
     # Overlapping voices
-    if (chord2[0] > chord1[1]
-        or chord2[1] < chord1[0] or chord2[1] > chord1[2]
-        or chord2[2] < chord1[1] or chord2[2] > chord1[3]
-        or chord2[3] < chord1[2]):
+    if (
+        chord2[0] > chord1[1]
+        or chord2[1] < chord1[0]
+        or chord2[1] > chord1[2]
+        or chord2[2] < chord1[1]
+        or chord2[2] > chord1[3]
+        or chord2[3] < chord1[2]
+    ):
         cost += 40
 
     # Avoid big jumps
-    diff = [abs(chord1.pitches[i].midi - chord2.pitches[i].midi)
-            for i in range(4)]
+    diff = [abs(chord1.pitches[i].midi - chord2.pitches[i].midi) for i in range(4)]
     cost += (diff[3] // 3) ** 2 if diff[3] else 1
     cost += diff[2] ** 2 // 3
     cost += diff[1] ** 2 // 3
-    cost += (diff[0] ** 2 // 50 if diff[0] != 12 else 0)
+    cost += diff[0] ** 2 // 50 if diff[0] != 12 else 0
 
     # Contrary motion is good, parallel fifths are bad
     for i in range(4):
         for j in range(i + 1, 4):
             t1, t2 = chord1.pitches[j], chord2.pitches[j]
             b1, b2 = chord1.pitches[i], chord2.pitches[i]
-            if t1 == t2 and b1 == b2: # No motion
+            if t1 == t2 and b1 == b2:  # No motion
                 continue
             i1, i2 = t1.midi - b1.midi, t2.midi - b2.midi
-            if i1 % 12 == i2 % 12 == 7: # Parallel fifth
+            if i1 % 12 == i2 % 12 == 7:  # Parallel fifth
                 cost += 60
-            if i1 % 12 == i2 % 12 == 0: # Parallel octave
+            if i1 % 12 == i2 % 12 == 0:  # Parallel octave
                 cost += 100
-            if i == 0 and j == 3: # Soprano and bass not contrary
+            if i == 0 and j == 3:  # Soprano and bass not contrary
                 if (t2 > t1 and b2 > b1) or (t2 < t1 and b2 < b1):
                     cost += 2
 
@@ -129,8 +131,10 @@ def progressionCost(key, chord1, chord2):
     # V->I means ti->do or ti->sol
     pitches = key.getPitches()
     pitches[6] = key.getLeadingTone()
-    if (chord1.root().name in (pitches[4].name, pitches[6].name)
-        and chord2.root().name in (pitches[0].name, pitches[5].name)):
+    if chord1.root().name in (
+        pitches[4].name,
+        pitches[6].name,
+    ) and chord2.root().name in (pitches[0].name, pitches[5].name):
         voice = chord1.pitchNames.index(pitches[6].name)
         delta = chord2.pitches[voice].midi - chord1.pitches[voice].midi
         if not (delta == 1 or (delta == -4 and voice >= 1 and voice <= 2)):
@@ -140,7 +144,7 @@ def progressionCost(key, chord1, chord2):
 
 
 def chordCost(key, chord):
-    '''Computes elements of cost that only pertain to a single chord.'''
+    """Computes elements of cost that only pertain to a single chord."""
     cost = 0
     if chord.inversion() == 0:
         # Slightly prefer to double the root in a R.P. chord
@@ -150,13 +154,13 @@ def chordCost(key, chord):
 
 
 def voiceProgression(key, chordProgression):
-    '''Voices a chord progression in a specified key using DP.
+    """Voices a chord progression in a specified key using DP.
 
     Follows eighteenth-century voice leading procedures, as guided by the cost
     function defined in the `chordCost` and `progressionCost` functions.
     Returns a list of four-pitch chords, corresponding to successive Roman
     numerals in the chord progression.
-    '''
+    """
     key = Key(key)
     if isinstance(chordProgression, str):
         chordProgression = list(filter(None, chordProgression.split()))
@@ -170,7 +174,7 @@ def voiceProgression(key, chordProgression):
                 dp[0][v.pitches] = (chordCost(key, v), None)
         else:
             for v in voicings:
-                best = (float('inf'), None)
+                best = (float("inf"), None)
                 for pv_pitches, (pcost, _) in dp[i - 1].items():
                     pv = Chord(pv_pitches)
                     ccost = pcost + progressionCost(key, pv, v)
@@ -186,21 +190,22 @@ def voiceProgression(key, chordProgression):
     return list(reversed(ret)), totalCost
 
 
-def generateScore(chords, lengths=None, ts='4/4'):
-    '''Generates a four-part score from a sequence of chords.
+def generateScore(chords, lengths=None, ts="4/4"):
+    """Generates a four-part score from a sequence of chords.
 
     Soprano and alto parts are displayed on the top (treble) clef, while tenor
     and bass parts are displayed on the bottom (bass) clef, with correct stem
     directions.
-    '''
+    """
     if lengths is None:
         lengths = [1 for _ in chords]
     voices = [Voice([Piano()]) for _ in range(4)]
     for chord, length in zip(chords, lengths):
         bass, tenor, alto, soprano = [
-            Note(p, quarterLength=length) for p in chord.pitches]
-        bass.stemDirection = alto.stemDirection = 'down'
-        tenor.stemDirection = soprano.stemDirection = 'up'
+            Note(p, quarterLength=length) for p in chord.pitches
+        ]
+        bass.stemDirection = alto.stemDirection = "down"
+        tenor.stemDirection = soprano.stemDirection = "up"
         voices[0].append(soprano)
         voices[1].append(alto)
         voices[2].append(tenor)
@@ -212,8 +217,8 @@ def generateScore(chords, lengths=None, ts='4/4'):
     return score
 
 
-def generateChorale(chorale, lengths=None, ts='4/4'):
-    '''Voices a chorale with multiple phrases.
+def generateChorale(chorale, lengths=None, ts="4/4"):
+    """Voices a chorale with multiple phrases.
 
     Each phrase should be placed on a line in the input string, with the key at
     the beginning followed by space-separated roman numerals. For example,
@@ -226,9 +231,8 @@ def generateChorale(chorale, lengths=None, ts='4/4'):
      b: iv6 i64 iv iio6 i64 V7 i
      A: IV IV V I6 ii V65 I
      D: IV6 I V65 I ii65 V7 I
-    '''
-    lines = [line.strip().split(':')
-             for line in chorale.split('\n') if line.strip()]
+    """
+    lines = [line.strip().split(":") for line in chorale.split("\n") if line.strip()]
     progression = []
     for key, chords in lines:
         phrase, _ = voiceProgression(key, chords)
@@ -238,9 +242,9 @@ def generateChorale(chorale, lengths=None, ts='4/4'):
 
 
 def main():
-    chorale = 'B-: I I6 IV V43/ii ii V V7 I'
-    generateChorale(chorale, [1, 1/2, 1, 1/2, 1, 1/2, 1/2, 1], '6/8').show()
+    chorale = "B-: I I6 IV V43/ii ii V V7 I"
+    generateChorale(chorale, [1, 1 / 2, 1, 1 / 2, 1, 1 / 2, 1 / 2, 1], "6/8").show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
