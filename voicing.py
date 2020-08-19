@@ -243,10 +243,6 @@ def generateChorale(chorale, lengths=None, ts="4/4"):
 
 
 def main():
-<<<<<<< HEAD
-    chorale = "B-: I I6 IV V43/ii ii V V7 I"
-    generateChorale(chorale, [1, 1 / 2, 1, 1 / 2, 1, 1 / 2, 1 / 2, 1], "6/8").show()
-=======
     parser = argparse.ArgumentParser(
         description=('Generates four-part harmony with idiomatic '
                      'voice-leading procedures and dynamic programming.'))
@@ -282,7 +278,6 @@ def main():
         durations,
         time_signature
     ).show()
->>>>>>> Adding an argparser
 
 
 if __name__ == "__main__":
