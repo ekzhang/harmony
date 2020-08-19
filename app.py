@@ -31,8 +31,8 @@ class Chorale(db.Model):
 
 
 def generate_subprocess(chorale_id):
+    obj = Chorale.query.get(chorale_id)
     try:
-        obj = Chorale.query.get(chorale_id)
         rhythm = obj.rhythm.split()
         lengths = [Fraction(rhythm[i % len(rhythm)]) for i in range(len(obj.chorale))]
         score = generateChorale(obj.chorale, lengths, obj.timesig)
