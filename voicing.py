@@ -1,4 +1,5 @@
 import copy
+import argparse
 import itertools
 from music21.note import Note
 from music21.pitch import Pitch
@@ -242,8 +243,46 @@ def generateChorale(chorale, lengths=None, ts="4/4"):
 
 
 def main():
+<<<<<<< HEAD
     chorale = "B-: I I6 IV V43/ii ii V V7 I"
     generateChorale(chorale, [1, 1 / 2, 1, 1 / 2, 1, 1 / 2, 1 / 2, 1], "6/8").show()
+=======
+    parser = argparse.ArgumentParser(
+        description=('Generates four-part harmony with idiomatic '
+                     'voice-leading procedures and dynamic programming.'))
+    parser.add_argument(
+        'key', type=str, nargs='?',
+        help=('the key of the chord progression')
+    )
+    parser.add_argument(
+        'chord_progression', type=str, nargs='?',
+        help=('a sequence of roman numeral annotations'
+              ', e.g., "I I6 IV V43/ii ii V V7 I"')
+    )
+    parser.add_argument(
+        'durations', type=str, nargs='?',
+        help=('the associated durations of the chords (in quarter notes)')
+    )
+    parser.add_argument(
+        'time_signature', type=str, nargs='?',
+        help=('the time signature')
+    )
+    parser.set_defaults(
+        key='B-',
+        chord_progression='I I6 IV V43/ii ii V V7 I',
+        durations='1 1/2 1 1/2 1 1/2 1/2 1',
+        time_signature='6/8',
+    )
+    args = parser.parse_args()
+    key_and_chords = f'{args.key}: {args.chord_progression}'
+    durations = [eval(x) for x in args.durations.split()]
+    time_signature = args.time_signature
+    generateChorale(
+        key_and_chords,
+        durations,
+        time_signature
+    ).show()
+>>>>>>> Adding an argparser
 
 
 if __name__ == "__main__":
