@@ -188,7 +188,7 @@ def voiceProgression(key, chordProgression):
     cur, (totalCost, _) = min(dp[-1].items(), key=lambda p: p[1][0])
     ret = []
     for i in reversed(range(len(chordProgression))):
-        ret.append(Chord(cur))
+        ret.append(Chord(cur, lyric=chordProgression[i]))
         cur = dp[i][cur][1]
     return list(reversed(ret)), totalCost
 
@@ -207,6 +207,7 @@ def generateScore(chords, lengths=None, ts="4/4"):
         bass, tenor, alto, soprano = [
             Note(p, quarterLength=length) for p in chord.pitches
         ]
+        bass.addLyric(chord.lyric)
         bass.stemDirection = alto.stemDirection = "down"
         tenor.stemDirection = soprano.stemDirection = "up"
         voices[0].append(soprano)
