@@ -8,10 +8,12 @@
     />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 
+    <title>Harmony</title>
+
     <link
       rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
-      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
       crossorigin="anonymous"
     />
 
@@ -21,8 +23,6 @@
       crossorigin="anonymous"
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
-
-    <title>Harmony</title>
   </head>
   <body class="container text-center p-4">
     <a href="/" style="color: inherit; text-decoration: none;"
@@ -33,6 +33,114 @@
       <a href="/view/2">Example 2</a> &bullet;
       <a href="/view/3">Example 3</a>
     </p>
+    <div class="form-group">
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        data-toggle="modal"
+        data-target="#helpModal"
+      >
+        Need Help?
+      </button>
+    </div>
+
+    <div class="modal fade" id="helpModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Harmony</h4>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body text-left">
+            <h5>Synopsis</h5>
+            <p>
+              AutoHarmony is a tool that lets you
+              <em>procedurally compose chorales</em>, using dynamic programming
+              and common-practice voice leading conventions. It's built on
+              <a href="https://web.mit.edu/music21/">Music21</a>.
+            </p>
+
+            <h5>Usage</h5>
+            <p>
+              The main input to the program is the <em>chord progression</em>.
+              This should be given in one or more lines, each of the format
+              <code>KEY: CHORD1 CHORD2 CHORD3...</code>, where the key is the
+              name of some
+              <a href="https://en.wikipedia.org/wiki/Key_signature"
+                >key signature</a
+              >
+              (for example: <code>B-</code> for B-flat major, or
+              <code>f#</code> for F-sharp minor). Each chord is expressed using
+              <a href="https://en.wikipedia.org/wiki/Roman_numeral_analysis"
+                >Roman numeral notation</a
+              >, like <code>I</code>, <code>V</code>, <code>V43</code>,
+              <code>viio7</code>, or <code>bII6</code>. This determines the
+              notes and the inversion.
+            </p>
+            <p>
+              For example, here is a short 8-note chord progression based in
+              B-flat major.
+            </p>
+            <pre><code>    B-: I I6 IV V43/ii ii V V7 I</code></pre>
+            <p>
+              You can also write longer chord progressions, such as the
+              following chorale that starts in D major, but then modulates to A
+              major, B minor, and then back to A major and D major.
+            </p>
+            <pre><code>    D: I vi I6 IV I64 V I
+    D: I6 V64 I IV6 V I6 V
+    D: I IV6 I6 IV I64 V7 vi
+    D: I6 V43 I I6 ii65 V I
+    A: I IV64 I vi ii6 V7 I
+    b: iv6 i64 iv iio6 i64 V7 i
+    A: IV IV V I6 ii V65 I
+    D: IV6 I V65 I ii65 V7 I</code></pre>
+            <p>
+              Note that longer chorales will take more time to generate. This is
+              an expensive operation. If many people are using the site at once,
+              the server may slow down.
+            </p>
+            <h5>Auxiliary Inputs</h5>
+            <p>
+              You can also specify the
+              <em>time signature</em> and <em>rhythm</em> when generating a
+              chorale. Time signature is specified in the usual notation
+              <code>N/M</code>, while rhythm is specified as a space-separated
+              list of the lengths of each chord, in units of quarter notes.
+            </p>
+            <p>
+              For example, a rhythm of <code>1/2 1 1/2 2</code> corresponds to:
+              an eighth note, a quarter note, an eighth note, and a half note.
+              You can also encode more advanced rhythms; a hemiola is
+              represented by <code>2/3 2/3 2/3</code>.
+            </p>
+            <h5>Final Note</h5>
+            <p>
+              Have fun playing with the chorale generator! I hope you find it
+              useful and/or inspiring. There are links to pre-generated examples
+              available at the top of the page. If you're curious about how this
+              all works, feel free to check out the
+              <a href="https://github.com/ekzhang/harmony">open-source code</a>.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <main>
       {% block main %}{% endblock %}
@@ -44,5 +152,11 @@
         >GitHub</a
       >).
     </footer>
+
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+      integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>
