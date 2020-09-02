@@ -72,7 +72,7 @@
     event.preventDefault();
 
     const length = event.target.chorale.value.split(" ").length;
-    const approxTime = length * 2.5e3;
+    const approxTime = length * 600;
     progress.start(approxTime);
 
     const { id } = await $.ajax({
