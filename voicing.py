@@ -156,7 +156,7 @@ def chordCost(key, chord):
     return cost
 
 
-def voiceProgression(key, chordProgression):
+def voiceProgression(key, chordProgression, numberOfAnswers=1):
     """Voices a chord progression in a specified key using DP.
 
     Follows eighteenth-century voice leading procedures, as guided by the cost
@@ -185,12 +185,17 @@ def voiceProgression(key, chordProgression):
                         best = (ccost, pv_pitches)
                 dp[i][v.pitches] = (best[0] + chordCost(key, v), best[1])
 
-    cur, (totalCost, _) = min(dp[-1].items(), key=lambda p: p[1][0])
-    ret = []
-    for i in reversed(range(len(chordProgression))):
-        ret.append(Chord(cur, lyric=chordProgression[i]))
-        cur = dp[i][cur][1]
-    return list(reversed(ret)), totalCost
+    ret = [[] for _ in range(numberOfAnswers)]
+    sortedCosts = sorted(dp[-1].items(), key=lambda p: p[1][0])
+    for topNthAnswer in range(numberOfAnswers):
+        progression = []
+        cur, (totalCost, _) = sortedCosts[topNthAnswer]
+        for i in reversed(range(len(chordProgression))):
+            progression.append(Chord(cur, lyric=chordProgression[i]))
+            cur = dp[i][cur][1]
+        ret[topNthAnswer] = (list(reversed(progression)), totalCost)
+
+    return ret if numberOfAnswers > 1 else ret[0]
 
 
 def generateScore(chords, lengths=None, ts="4/4"):
@@ -239,7 +244,8 @@ def generateChorale(chorale, lengths=None, ts="4/4"):
     lines = [line.strip().split(":") for line in chorale.split("\n") if line.strip()]
     progression = []
     for key, chords in lines:
-        phrase, _ = voiceProgression(key, chords)
+        progressions = voiceProgression(key, chords, numberOfAnswers=5)
+        phrase, _ = progressions[0]
         progression.extend(phrase)
     score = generateScore(progression, lengths, ts)
     return score
