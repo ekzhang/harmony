@@ -277,10 +277,10 @@ def main():
         "time_signature", type=str, nargs="?", help="the time signature"
     )
     parser.set_defaults(
-        key="A",
-        chord_progression="viio/II ii ii7 vii65/II ii6 v V/II ii",
-        durations="1 1 1 1/2 1/2 1 1",
-        time_signature="4/4",
+        key="B-",
+        chord_progression="I I6 IV V43/ii ii V V7 I",
+        durations="1 1/2 1 1/2 1 1/2 1/2 1",
+        time_signature="6/8",
     )
     args = parser.parse_args()
     key_and_chords = f"{args.key}: {args.chord_progression}"
