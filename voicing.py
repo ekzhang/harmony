@@ -134,10 +134,15 @@ def progressionCost(key, chord1, chord2):
     # V->I means ti->do or ti->sol
     pitches = key.getPitches()
     pitches[6] = key.getLeadingTone()
-    if chord1.root().name in (
-        pitches[4].name,
-        pitches[6].name,
-    ) and chord2.root().name in (pitches[0].name, pitches[5].name):
+    if (
+        chord1.root().name
+        in (
+            pitches[4].name,
+            pitches[6].name,
+        )
+        and chord2.root().name in (pitches[0].name, pitches[5].name)
+        and pitches[6].name in chord1.pitchNames
+    ):
         voice = chord1.pitchNames.index(pitches[6].name)
         delta = chord2.pitches[voice].midi - chord1.pitches[voice].midi
         if not (delta == 1 or (delta == -4 and voice >= 1 and voice <= 2)):
@@ -251,7 +256,10 @@ def main():
         "voice-leading procedures and dynamic programming."
     )
     parser.add_argument(
-        "key", type=str, nargs="?", help="the key of the chord progression",
+        "key",
+        type=str,
+        nargs="?",
+        help="the key of the chord progression",
     )
     parser.add_argument(
         "chord_progression",
