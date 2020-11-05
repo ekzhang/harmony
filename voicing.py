@@ -260,21 +260,21 @@ def main():
         "input",
         type=str,
         nargs="?",
-        default='example.rntxt',
+        default="example.rntxt",
         help="A RomanText input file with the chord progression",
     )
     args = parser.parse_args()
-    s = parse(args.input, format='rntxt')
-    key_it = s.flat.getElementsByClass('Key')
-    key = next(key_it, Key('C')).tonicPitchNameWithCase
-    ts_it = s.flat.getElementsByClass('TimeSignature')
-    ts = next(ts_it, TimeSignature('4/4')).ratioString
+    s = parse(args.input, format="rntxt")
+    key_it = s.flat.getElementsByClass("Key")
+    key = next(key_it, Key("C")).tonicPitchNameWithCase
+    ts_it = s.flat.getElementsByClass("TimeSignature")
+    ts = next(ts_it, TimeSignature("4/4")).ratioString
     durations = []
     chords = []
-    for rn in s.flat.getElementsByClass('RomanNumeral'):
+    for rn in s.flat.getElementsByClass("RomanNumeral"):
         durations.append(rn.duration.quarterLength)
         chords.append(rn.figure)
-    chord_progression = ' '.join(chords)
+    chord_progression = " ".join(chords)
     key_and_chords = f"{key}: {chord_progression}"
     generateChorale(key_and_chords, durations, ts).show()
 
