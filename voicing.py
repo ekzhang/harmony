@@ -101,6 +101,10 @@ def progressionCost(key, chord1, chord2):
     ):
         cost += 40
 
+    # Penalize the same chord
+    if chord1.notes == chord2.notes:
+        cost += 2
+
     # Avoid big jumps
     diff = [abs(chord1.pitches[i].midi - chord2.pitches[i].midi) for i in range(4)]
     cost += (diff[3] // 3) ** 2 if diff[3] else 1
