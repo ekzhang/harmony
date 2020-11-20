@@ -264,7 +264,7 @@ def main():
         help="A RomanText input file with the chord progression",
     )
     args = parser.parse_args()
-    s = parse(args.input, format="rntxt")
+    s = parse(args.input, format="rntext")
     key_it = s.flat.getElementsByClass("Key")
     key = next(key_it, Key("C")).tonicPitchNameWithCase
     ts_it = s.flat.getElementsByClass("TimeSignature")
