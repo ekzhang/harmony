@@ -11,13 +11,13 @@ Flask = "*"
 Flask-SQLAlchemy = "*"
 gunicorn = "*"
 Jinja2 = "*"
-music21 = "*"
+music21 = ">=7.0, <8.0"
 psycopg2-binary = "*"
 SQLAlchemy = "*"
 Werkzeug = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
 
 [pipenv]
 allow_prereleases = true

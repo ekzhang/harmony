@@ -25,16 +25,16 @@ To generate a chorale:
 $ python voicing.py
 ```
 
-To launch the development web server:
+Then, create a fresh Postgres database. Tables will be created on first application run. To launch the development web server:
 
 ```shell
-$ FLASK_APP=app.py FLASK_ENV=development DATABASE_URL=<POSTGRES_URL> flask run
+$ FLASK_APP=app.py FLASK_DEBUG=1 DATABASE_URL=<POSTGRES_URL> flask run
 ```
 
 To launch the production web server:
 
 ```shell
-$ DATABASE_URL=<POSTGRES_URL> WEB_CONCURRENCY=<NUM_WORKERS> gunicorn app
+$ DATABASE_URL=<POSTGRES_URL> WEB_CONCURRENCY=2 gunicorn app:app
 ```
 
 ## License

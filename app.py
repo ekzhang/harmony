@@ -2,14 +2,23 @@ import threading
 import os
 from fractions import Fraction
 
-from flask import Flask, request, url_for, render_template, jsonify, abort
+from flask import Flask, request, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 
 from voicing import generateChorale
 
-app = application = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+def create_app(name: str) -> Flask:
+    app = Flask(name)
+    uri = os.environ["DATABASE_URL"]
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    return app
+
+
+app = create_app(__name__)
 db = SQLAlchemy(app)
 
 
@@ -30,19 +39,26 @@ class Chorale(db.Model):
         return "<Chorale {}>".format(self.id)
 
 
+with app.app_context():
+    db.create_all()
+
+
 def generate_subprocess(chorale_id):
-    obj = Chorale.query.get(chorale_id)
-    try:
-        rhythm = obj.rhythm.split()
-        lengths = [Fraction(rhythm[i % len(rhythm)]) for i in range(len(obj.chorale))]
-        score = generateChorale(obj.chorale, lengths, obj.timesig)
-        fp = score.write("musicxml")
-        with open(fp, "r") as f:
-            obj.mxml = f.read()
-        db.session.commit()
-    except Exception as e:
-        obj.error = str(e)
-        db.session.commit()
+    with app.app_context():
+        obj = Chorale.query.get(chorale_id)
+        try:
+            rhythm = obj.rhythm.split()
+            lengths = [
+                Fraction(rhythm[i % len(rhythm)]) for i in range(len(obj.chorale))
+            ]
+            score = generateChorale(obj.chorale, lengths, obj.timesig)
+            fp = score.write("musicxml")
+            with open(fp, "r") as f:
+                obj.mxml = f.read()
+            db.session.commit()
+        except Exception as e:
+            obj.error = str(e)
+            db.session.commit()
 
 
 @app.route("/")
