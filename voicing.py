@@ -3,6 +3,7 @@ import argparse
 import itertools
 from fractions import Fraction
 
+from music21.converter import parse
 from music21.note import Note
 from music21.pitch import Pitch
 from music21.chord import Chord
@@ -256,37 +257,26 @@ def main():
         "voice-leading procedures and dynamic programming."
     )
     parser.add_argument(
-        "key",
+        "input",
         type=str,
         nargs="?",
-        help="the key of the chord progression",
-    )
-    parser.add_argument(
-        "chord_progression",
-        type=str,
-        nargs="?",
-        help='a sequence of roman numeral annotations, e.g., "I I6 IV V43/ii ii V V7 I"',
-    )
-    parser.add_argument(
-        "durations",
-        type=str,
-        nargs="?",
-        help="the associated durations of the chords (in quarter notes)",
-    )
-    parser.add_argument(
-        "time_signature", type=str, nargs="?", help="the time signature"
-    )
-    parser.set_defaults(
-        key="B-",
-        chord_progression="I I6 IV V43/ii ii V V7 I",
-        durations="1 1/2 1 1/2 1 1/2 1/2 1",
-        time_signature="6/8",
+        default="example.rntxt",
+        help="A RomanText input file with the chord progression",
     )
     args = parser.parse_args()
-    key_and_chords = f"{args.key}: {args.chord_progression}"
-    durations = [Fraction(x) for x in args.durations.split()]
-    time_signature = args.time_signature
-    generateChorale(key_and_chords, durations, time_signature).show()
+    s = parse(args.input, format="rntext")
+    key_it = s.flat.getElementsByClass("Key")
+    key = next(key_it, Key("C")).tonicPitchNameWithCase
+    ts_it = s.flat.getElementsByClass("TimeSignature")
+    ts = next(ts_it, TimeSignature("4/4")).ratioString
+    durations = []
+    chords = []
+    for rn in s.flat.getElementsByClass("RomanNumeral"):
+        durations.append(rn.duration.quarterLength)
+        chords.append(rn.figure)
+    chord_progression = " ".join(chords)
+    key_and_chords = f"{key}: {chord_progression}"
+    generateChorale(key_and_chords, durations, ts).show()
 
 
 if __name__ == "__main__":
